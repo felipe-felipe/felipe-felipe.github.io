@@ -2,9 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hello World</title>
+  <title>Guess the Square Names</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(2, 150px);
+      grid-gap: 20px;
+    }
+    .square {
+      width: 150px;
+      height: 150px;
+      background-color: #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .square:hover {
+      background-color: #aaa;
+    }
+    .correct {
+      background-color: green !important;
+      color: white;
+    }
+    .incorrect {
+      background-color: red !important;
+      color: white;
+    }
+    .check-button {
+      display: block;
+      margin: 20px auto 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hello, World!</h1>
+  <div>
+    <div class="container">
+      <div class="square" data-id="0"></div>
+      <div class="square" data-id="1"></div>
+      <div class="square" data-id="2"></div>
+      <div class="square" data-id="3"></div>
+    </div>
+    <button class="check-button" onclick="checkGuesses()">Check Answers</button>
+  </div>
+
+  <script>
+    const hiddenNames = ["Sun", "Moon", "Star", "Cloud"];
+    const userGuesses = [null, null, null, null];
+    const squares = document.querySelectorAll('.square');
+
+    squares.forEach(square => {
+      square.addEventListener('click', () => {
+        const id = square.getAttribute('data-id');
+        const guess = prompt("Enter the name for this square:");
+        if (guess !== null) {
+          userGuesses[id] = guess.trim();
+          square.textContent = guess.trim();
+        }
+      });
+    });
+
+    function checkGuesses() {
+      squares.forEach((square, index) => {
+        const guess = userGuesses[index];
+        if (!guess) return;
+
+        if (guess.toLowerCase() === hiddenNames[index].toLowerCase()) {
+          square.classList.add('correct');
+        } else {
+          square.classList.add('incorrect');
+          square.addEventListener('click', () => {
+            alert(`Correct name for this square is: ${hiddenNames[index]}`);
+
+            // Also check if guessed name belongs to another square
+            const guessedIndex = hiddenNames.findIndex(name => name.toLowerCase() === guess.toLowerCase());
+            if (guessedIndex !== -1 && guessedIndex !== index) {
+              const correctSquare = document.querySelector(`.square[data-id='${guessedIndex}']`);
+              correctSquare.classList.add('correct');
+              correctSquare.textContent = hiddenNames[guessedIndex];
+            }
+          }, { once: true });
+        }
+      });
+    }
+  </script>
 </body>
 </html>
