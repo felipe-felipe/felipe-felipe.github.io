@@ -39,7 +39,7 @@
       color: white;
     }
     .check-button {
-      display: block;
+      display: none;
       margin: 20px auto 0;
       padding: 10px 20px;
       font-size: 16px;
@@ -55,26 +55,38 @@
       <div class="square" data-id="2"></div>
       <div class="square" data-id="3"></div>
     </div>
-    <button class="check-button" onclick="checkGuesses()">Check Answers</button>
+    <button class="check-button" id="checkBtn" onclick="checkGuesses()">Check Answers</button>
   </div>
 
   <script>
     const hiddenNames = ["Sun", "Moon", "Star", "Cloud"];
-    const userGuesses = [null, null, null, null];
+    let userGuesses = [null, null, null, null];
     const squares = document.querySelectorAll('.square');
+    const checkButton = document.getElementById('checkBtn');
+    let gameEnded = false;
 
     squares.forEach(square => {
       square.addEventListener('click', () => {
+        if (gameEnded) return;
+
         const id = square.getAttribute('data-id');
         const guess = prompt("Enter the name for this square:");
         if (guess !== null) {
           userGuesses[id] = guess.trim();
           square.textContent = guess.trim();
+          checkIfReady();
         }
       });
     });
 
+    function checkIfReady() {
+      if (userGuesses.every(g => g !== null && g !== '')) {
+        checkButton.style.display = 'block';
+      }
+    }
+
     function checkGuesses() {
+      gameEnded = true;
       squares.forEach((square, index) => {
         const guess = userGuesses[index];
         if (!guess) return;
@@ -86,7 +98,6 @@
           square.addEventListener('click', () => {
             alert(`Correct name for this square is: ${hiddenNames[index]}`);
 
-            // Also check if guessed name belongs to another square
             const guessedIndex = hiddenNames.findIndex(name => name.toLowerCase() === guess.toLowerCase());
             if (guessedIndex !== -1 && guessedIndex !== index) {
               const correctSquare = document.querySelector(`.square[data-id='${guessedIndex}']`);
@@ -96,6 +107,20 @@
           }, { once: true });
         }
       });
+      checkButton.textContent = 'Restart';
+      checkButton.onclick = restartGame;
+    }
+
+    function restartGame() {
+      userGuesses = [null, null, null, null];
+      gameEnded = false;
+      squares.forEach(square => {
+        square.textContent = '';
+        square.classList.remove('correct', 'incorrect');
+      });
+      checkButton.textContent = 'Check Answers';
+      checkButton.style.display = 'none';
+      checkButton.onclick = checkGuesses;
     }
   </script>
 </body>
