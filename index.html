@@ -1,131 +1,18 @@
 <!DOCTYPE html>
-<html lang="en  ">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Guess the Square Names</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      margin: 0;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-
-    .button {
-      padding: 8px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background-color: #007bff;
-      color: white;
-      transition: background-color 0.2s;
-    }
-
-    .button:hover {
-      background-color: #0056b3;
-    }
-
-    .check-button {
-      margin-bottom: 20px;
-      display: none;
-    }
-
-    .container {
-      display: grid;
-      grid-template-columns: repeat(2, 150px);
-      grid-gap: 20px;
-    }
-
-    .square {
-      width: 150px;
-      height: 150px;
-      background-color: #ccc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      transition: background-color 0.3s, opacity 0.3s;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .square:hover {
-      background-color: #aaa;
-    }
-
-    .correct {
-      background-color: green !important;
-      color: white;
-    }
-
-    .correct:hover {
-      background-color: #0f0 !important;
-    }
-
-    .incorrect {
-      background-color: red !important;
-      color: white;
-    }
-
-    .incorrect:hover {
-      background-color: #f55 !important;
-    }
-
-    .faded {
-      opacity: 0.3;
-    }
-
-    .modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      display: none;
-      z-index: 1000;
-      flex-direction: column;
-      gap: 10px;
-      border-radius: 10px;
-    }
-
-    .modal input {
-      padding: 8px;
-      font-size: 16px;
-    }
-
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      z-index: 999;
-    }
-
-    .accuracy {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dark-theme">
+
+  <div class="top-bar">
+    <button class="button theme-toggle" id="themeToggle">Toggle Theme</button>
+  </div>
 
   <div class="controls" id="devButtons">
-    <button class="button" onmousedown="showDevAnswers()" onmouseup="hideDevAnswers()" onmouseleave="hideDevAnswers()">Reveal Correct Answers (Hold)</button>
+    <button class="button" onmousedown="showDevAnswers()" onmouseup="hideDevAnswers()" onmouseleave="hideDevAnswers()">Reveal Answers (Hold)</button>
     <button class="button" onclick="autoFillSquares()">Auto Fill for Testing</button>
   </div>  
 
@@ -140,172 +27,12 @@
 
   <div class="accuracy" id="accuracyText"></div>
 
-  <!-- Modal and Overlay for Typing -->
   <div class="overlay" id="overlay"></div>
   <div class="modal" id="nameModal">
     <label for="guessInput">Enter name:</label>
     <input type="text" id="guessInput">
   </div>
 
-  <script>
-    const hiddenNames = ["Sun", "Moon", "Star", "Cloud"];
-    let userGuesses = [null, null, null, null];
-    const squares = document.querySelectorAll('.square');
-    const checkButton = document.getElementById('checkBtn');
-    const modal = document.getElementById('nameModal');
-    const overlay = document.getElementById('overlay');
-    const input = document.getElementById('guessInput');
-    const accuracyText = document.getElementById('accuracyText');
-    let currentId = null;
-    let gameEnded = false;
-
-    // Square click interaction
-    squares.forEach(square => {
-      square.addEventListener('click', () => {
-        if (gameEnded) return;
-        currentId = square.getAttribute('data-id');
-        input.value = userGuesses[currentId] || '';
-        modal.style.display = 'flex';
-        overlay.style.display = 'block';
-        input.focus();
-      });
-    });
-
-    // Submit guess via Enter key
-    input.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        submitGuess();
-      }
-    });
-
-    function submitGuess() {
-      const guess = input.value.trim();
-      if (guess && currentId !== null) {
-        userGuesses[currentId] = guess;
-        squares[currentId].textContent = guess;
-        modal.style.display = 'none';
-        overlay.style.display = 'none';
-        currentId = null;
-        checkIfReady();
-      }
-    }
-
-    function checkIfReady() {
-      if (userGuesses.some(g => g && g !== '')) {
-        checkButton.style.display = 'inline-block';
-      }
-    }
-
-    function checkGuesses() {
-      gameEnded = true;
-      document.getElementById('devButtons').style.display = 'none';
-      let correctCount = 0;
-      squares.forEach((square, index) => {
-        const guess = userGuesses[index];
-        if (!guess) return;
-
-        if (guess.toLowerCase() === hiddenNames[index].toLowerCase()) {
-          square.classList.add('correct');
-          correctCount++;
-        } else {
-          square.classList.add('incorrect');
-          square.addEventListener('mousedown', () => {
-            handleReveal(index, guess);
-          });
-          square.addEventListener('mouseup', resetSquares);
-          square.addEventListener('mouseleave', resetSquares);
-        }
-      });
-
-      const accuracy = (correctCount / hiddenNames.length) * 100;
-      accuracyText.textContent = `Accuracy: ${accuracy.toFixed(0)}%`;
-
-      checkButton.textContent = 'Restart';
-      checkButton.onclick = () => location.reload(); // Reload the page to restart
-    }
-
-    function handleReveal(index, guess) {
-      squares.forEach(sq => sq.classList.add('faded'));
-      const clickedSquare = squares[index];
-      clickedSquare.classList.remove('faded');
-      clickedSquare.classList.add('incorrect');
-
-      const guessedIndex = hiddenNames.findIndex(name => name.toLowerCase() === guess.toLowerCase());
-
-      if (guessedIndex !== -1 && guessedIndex !== index) {
-        // Show the correct square for the guessed name
-        const correctSquare = squares[guessedIndex];
-        correctSquare.classList.remove('faded');
-        correctSquare.classList.add('correct');
-        correctSquare.textContent = hiddenNames[guessedIndex];
-      }
-
-      // ✅ Always show the correct answer for the clicked square
-      clickedSquare.textContent = hiddenNames[index];
-    }
-
-
-    function resetSquares() {
-      squares.forEach((square, index) => {
-        square.classList.remove('faded');
-        square.textContent = userGuesses[index] || '';
-        if (userGuesses[index] === hiddenNames[index]) {
-          square.classList.add('correct');
-        }
-      });
-    }
-
-    function showDevAnswers() {
-      squares.forEach((square, index) => {
-        square.textContent = hiddenNames[index];
-      });
-    }
-
-    function hideDevAnswers() {
-      squares.forEach((square, index) => {
-        square.textContent = userGuesses[index] || '';
-      });
-    }
-
-    function autoFillSquares() {
-      const options = ["Sun", "Moon", "Star", "Cloud", "Sky", "Rain", "Wind", "Storm"];
-      let guesses = [];
-
-      // 1 correct answer
-      const correctIndex = Math.floor(Math.random() * 4);
-      guesses[correctIndex] = hiddenNames[correctIndex];
-
-      // 1 name in wrong position
-      let wrongPosIndex;
-      do {
-        wrongPosIndex = Math.floor(Math.random() * 4);
-      } while (wrongPosIndex === correctIndex);
-
-      const otherNames = hiddenNames.filter((_, i) => i !== wrongPosIndex);
-      let wrongPosName = otherNames[Math.floor(Math.random() * otherNames.length)];
-      if (hiddenNames[wrongPosIndex] === wrongPosName) {
-        wrongPosName = otherNames.find(n => n !== hiddenNames[wrongPosIndex]);
-      }
-      guesses[wrongPosIndex] = wrongPosName;
-
-      // Remaining: random wrong names
-      for (let i = 0; i < 4; i++) {
-        if (guesses[i]) continue;
-        let randName;
-        do {
-          randName = options[Math.floor(Math.random() * options.length)];
-        } while (hiddenNames.includes(randName) || guesses.includes(randName));
-        guesses[i] = randName;
-      }
-
-      guesses.forEach((name, index) => {
-        userGuesses[index] = name;
-        squares[index].textContent = name;
-      });
-
-      checkIfReady();
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
